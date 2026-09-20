@@ -1,487 +1,107 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Omnicube</title>
-<style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-
-  body {
-    background: #1a1f2e;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    overflow: hidden;
-    user-select: none;
-  }
-
-  .scene-wrapper {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 32px;
-    padding-bottom: 20px;
-  }
-
-  .title {
-    color: rgba(255,255,255,0.4);
-    font-size: 11px;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    font-weight: 500;
-  }
-
-  /* ── Scene ── */
-  .scene {
-    width: 240px;
-    height: 240px;
-    perspective: 600px;
-    cursor: grab;
-  }
-  .scene:active { cursor: grabbing; }
-
-  .cube {
-    width: 240px;
-    height: 240px;
-    position: relative;
-    transform-style: preserve-3d;
-    transition: transform 0.55s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  }
-
-  .face {
-    position: absolute;
-    width: 240px;
-    height: 240px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    font-weight: 700;
-    font-size: 15px;
-    letter-spacing: 0.5px;
-    border: 1.5px solid rgba(255,255,255,0.18);
-    overflow: hidden;
-  }
-
-  .face::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: 16px;
-    background: linear-gradient(135deg, rgba(255,255,255,0.12) 0%, transparent 60%);
-    pointer-events: none;
-  }
-
-  .face-icon {
-    font-size: 52px;
-    line-height: 1;
-    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
-  }
-
-  .face-label {
-    color: rgba(255,255,255,0.92);
-    text-shadow: 0 2px 6px rgba(0,0,0,0.4);
-    font-size: 13px;
-    font-weight: 600;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-  }
-
-  /* Face colors */
-  .face-front  { background: linear-gradient(145deg, #4f8ef7, #2563eb); }
-  .face-back   { background: linear-gradient(145deg, #a855f7, #7c3aed); }
-  .face-right  { background: linear-gradient(145deg, #f97316, #ea580c); }
-  .face-left   { background: linear-gradient(145deg, #22c55e, #16a34a); }
-  .face-top    { background: linear-gradient(145deg, #ec4899, #db2777); }
-  .face-bottom { background: linear-gradient(145deg, #14b8a6, #0d9488); }
-
-  /* Transforms (half = 120px) */
-  .face-front  { transform: translateZ(120px); }
-  .face-back   { transform: rotateY(180deg) translateZ(120px); }
-  .face-right  { transform: rotateY(90deg)  translateZ(120px); }
-  .face-left   { transform: rotateY(-90deg) translateZ(120px); }
-  .face-top    { transform: rotateX(90deg)  translateZ(120px); }
-  .face-bottom { transform: rotateX(-90deg) translateZ(120px); }
-
-  /* ── Bottom nav ── */
-  .bottom-nav {
-    width: 100%;
-    max-width: 480px;
-    background: #212736;
-    border-top: 1px solid rgba(255,255,255,0.07);
-    display: flex;
-    align-items: center;
-    justify-content: space-around;
-    padding: 10px 0 max(10px, env(safe-area-inset-bottom));
-  }
-
-  .nav-btn {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 6px 10px;
-    border-radius: 12px;
-    transition: background 0.15s;
-    position: relative;
-    min-width: 52px;
-  }
-  .nav-btn:hover  { background: rgba(255,255,255,0.06); }
-  .nav-btn:active { background: rgba(255,255,255,0.12); transform: scale(0.95); }
-
-  .nav-icon {
-    font-size: 22px;
-    line-height: 1;
-    position: relative;
-    transition: transform 0.2s, filter 0.2s;
-  }
-
-  .nav-label {
-    font-size: 10px;
-    font-weight: 500;
-    color: rgba(255,255,255,0.4);
-    letter-spacing: 0.3px;
-    transition: color 0.15s;
-    white-space: nowrap;
-  }
-
-  .nav-btn.active .nav-label { color: #4f8ef7; }
-  .nav-btn.active .nav-icon  { transform: scale(1.1); filter: none; }
-  .nav-btn:not(.active) .nav-icon { filter: grayscale(0.5) brightness(0.7); }
-
-  /* ── Toggle switch ── */
-  .view-toggle {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .toggle-label {
-    font-size: 10px;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    font-weight: 600;
-    color: rgba(255,255,255,0.35);
-    transition: color 0.2s;
-    width: 36px;
-    text-align: center;
-  }
-  .toggle-label.active-label { color: rgba(255,255,255,0.75); }
-
-  .switch {
-    position: relative;
-    width: 44px;
-    height: 24px;
-    cursor: pointer;
-  }
-  .switch input { opacity: 0; width: 0; height: 0; }
-  .switch-track {
-    position: absolute;
-    inset: 0;
-    background: rgba(255,255,255,0.1);
-    border: 1px solid rgba(255,255,255,0.15);
-    border-radius: 12px;
-    transition: background 0.25s;
-  }
-  .switch input:checked + .switch-track { background: rgba(79,142,247,0.35); border-color: rgba(79,142,247,0.5); }
-  .switch-knob {
-    position: absolute;
-    top: 3px;
-    left: 3px;
-    width: 16px;
-    height: 16px;
-    background: rgba(255,255,255,0.7);
-    border-radius: 50%;
-    transition: transform 0.25s cubic-bezier(0.25,0.46,0.45,0.94), background 0.25s;
-    pointer-events: none;
-  }
-  .switch input:checked ~ .switch-knob { transform: translateX(20px); background: #4f8ef7; }
-
-  /* ── List view ── */
-  .face-list {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    width: 240px;
-    opacity: 0;
-    pointer-events: none;
-    position: absolute;
-    transform: scale(0.92) translateY(12px);
-    transition: opacity 0.35s ease, transform 0.35s cubic-bezier(0.25,0.46,0.45,0.94);
-  }
-  .face-list.visible {
-    opacity: 1;
-    pointer-events: auto;
-    position: relative;
-    transform: none;
-  }
-
-  .face-card {
-    border-radius: 0;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 14px 18px;
-    border: 1.5px solid rgba(255,255,255,0.13);
-    position: relative;
-    overflow: hidden;
-    cursor: default;
-  }
-  .face-card::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, rgba(255,255,255,0.10) 0%, transparent 60%);
-    pointer-events: none;
-  }
-  .face-card .card-icon { font-size: 28px; line-height: 1; flex-shrink: 0; }
-  .face-card .card-label {
-    color: rgba(255,255,255,0.92);
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-  }
-
-  /* Reuse face colors */
-  .face-card.face-front  { background: linear-gradient(145deg, #4f8ef7, #2563eb); }
-  .face-card.face-back   { background: linear-gradient(145deg, #a855f7, #7c3aed); }
-  .face-card.face-right  { background: linear-gradient(145deg, #f97316, #ea580c); }
-  .face-card.face-left   { background: linear-gradient(145deg, #22c55e, #16a34a); }
-  .face-card.face-top    { background: linear-gradient(145deg, #ec4899, #db2777); }
-  .face-card.face-bottom { background: linear-gradient(145deg, #14b8a6, #0d9488); }
-
-  /* Hide/show cube vs list */
-  .scene { transition: opacity 0.3s ease, transform 0.3s ease; }
-  .scene.hidden {
-    opacity: 0;
-    pointer-events: none;
-    transform: scale(0.9);
-    position: absolute;
-  }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Omnicube</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
 
 <div class="scene-wrapper">
-
-  <!-- View toggle -->
-  <div class="view-toggle">
-    <span class="toggle-label active-label" id="lbl-cube">Cube</span>
-    <label class="switch">
-      <input type="checkbox" id="view-switch">
-      <div class="switch-track"></div>
-      <div class="switch-knob"></div>
-    </label>
-    <span class="toggle-label" id="lbl-list">List</span>
-  </div>
-
-  <!-- Face list (shown in list view) -->
+  <!-- List view -->
   <div class="face-list" id="face-list">
-    <div class="face-card face-front">  <div class="card-icon">🌐</div><div class="card-label">World</div>  </div>
-    <div class="face-card face-back">   <div class="card-icon">🔮</div><div class="card-label">Magic</div>  </div>
-    <div class="face-card face-right">  <div class="card-icon">🔥</div><div class="card-label">Fire</div>   </div>
-    <div class="face-card face-left">   <div class="card-icon">🌿</div><div class="card-label">Nature</div> </div>
-    <div class="face-card face-top">    <div class="card-icon">✨</div><div class="card-label">Stars</div>  </div>
-    <div class="face-card face-bottom"> <div class="card-icon">🌊</div><div class="card-label">Ocean</div>  </div>
+    <div class="face-card face-front"  data-face-idx="0"></div>
+    <div class="face-card face-right"  data-face-idx="1"></div>
+    <div class="face-card face-back"   data-face-idx="2"></div>
+    <div class="face-card face-left"   data-face-idx="3"></div>
+    <div class="face-card face-top"    data-face-idx="4"></div>
+    <div class="face-card face-bottom" data-face-idx="5"></div>
   </div>
 
+  <!-- Cube view -->
   <div class="scene" id="scene">
     <div class="cube" id="cube">
-      <div class="face face-front">
-        <div class="face-icon">🌐</div>
-        <div class="face-label">World</div>
-      </div>
-      <div class="face face-back">
-        <div class="face-icon">🔮</div>
-        <div class="face-label">Magic</div>
-      </div>
-      <div class="face face-right">
-        <div class="face-icon">🔥</div>
-        <div class="face-label">Fire</div>
-      </div>
-      <div class="face face-left">
-        <div class="face-icon">🌿</div>
-        <div class="face-label">Nature</div>
-      </div>
-      <div class="face face-top">
-        <div class="face-icon">✨</div>
-        <div class="face-label">Stars</div>
-      </div>
-      <div class="face face-bottom">
-        <div class="face-icon">🌊</div>
-        <div class="face-label">Ocean</div>
-      </div>
+      <div class="face face-front"></div>
+      <div class="face face-back"></div>
+      <div class="face face-right"></div>
+      <div class="face face-left"></div>
+      <div class="face face-top"></div>
+      <div class="face face-bottom"></div>
     </div>
   </div>
 
+  <!-- Nav arrows: centered over cube, sized to cube, overflow visible -->
+  <div class="nav-arrows" id="nav-arrows">
+    <div class="nav-arrow nav-arrow-up" id="arrow-up">
+      <svg viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>
+    </div>
+    <div class="nav-arrow nav-arrow-down" id="arrow-down">
+      <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+    <div class="nav-arrow nav-arrow-left" id="arrow-left">
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+    </div>
+    <div class="nav-arrow nav-arrow-right" id="arrow-right">
+      <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>
+  </div>
 </div>
 
-<!-- Bottom nav: icons + labels mirror the cube faces -->
-<nav class="bottom-nav" id="bottom-nav">
-  <button class="nav-btn active" data-face-idx="0" data-rx="0"   data-ry="0">
-    <div class="nav-icon">🌐</div>
-    <div class="nav-label">World</div>
-  </button>
-  <button class="nav-btn" data-face-idx="1" data-rx="0"   data-ry="180">
-    <div class="nav-icon">🔮</div>
-    <div class="nav-label">Magic</div>
-  </button>
-  <button class="nav-btn" data-face-idx="2" data-rx="0"   data-ry="-90">
-    <div class="nav-icon">🔥</div>
-    <div class="nav-label">Fire</div>
-  </button>
-  <button class="nav-btn" data-face-idx="3" data-rx="0"   data-ry="90">
-    <div class="nav-icon">🌿</div>
-    <div class="nav-label">Nature</div>
-  </button>
-  <button class="nav-btn" data-face-idx="4" data-rx="-90" data-ry="0">
-    <div class="nav-icon">✨</div>
-    <div class="nav-label">Stars</div>
-  </button>
-  <button class="nav-btn" data-face-idx="5" data-rx="90"  data-ry="0">
-    <div class="nav-icon">🌊</div>
-    <div class="nav-label">Ocean</div>
-  </button>
+<!-- Active face name -->
+<div class="active-face-bar">
+  <span class="active-face-name" id="active-face-name">World</span>
+</div>
+
+<!-- Bottom nav -->
+<nav class="bottom-nav">
+
+  <!-- Left: cube / list toggle -->
+  <div class="view-toggle">
+    <button class="toggle-btn active" id="btn-cube" aria-label="Cube view">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+        <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+        <line x1="12" y1="22.08" x2="12" y2="12"/>
+      </svg>
+    </button>
+    <button class="toggle-btn" id="btn-list" aria-label="List view">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="8" y1="6"  x2="21" y2="6"/>
+        <line x1="8" y1="12" x2="21" y2="12"/>
+        <line x1="8" y1="18" x2="21" y2="18"/>
+        <line x1="3" y1="6"  x2="3.01" y2="6"/>
+        <line x1="3" y1="12" x2="3.01" y2="12"/>
+        <line x1="3" y1="18" x2="3.01" y2="18"/>
+      </svg>
+    </button>
+  </div>
+
+  <div class="nav-divider"></div>
+
+  <!-- Center: 4 horizontal faces in ring order 0→1→2→3 -->
+  <div class="face-nav" id="face-nav">
+    <button class="face-nav-btn active" data-face-idx="0"></button>
+    <button class="face-nav-btn"        data-face-idx="1"></button>
+    <button class="face-nav-btn"        data-face-idx="2"></button>
+    <button class="face-nav-btn"        data-face-idx="3"></button>
+  </div>
+
+  <div class="nav-divider"></div>
+
+  <!-- Right: top / bottom -->
+  <div class="vertical-face-nav">
+    <button class="vert-face-btn" data-face-idx="4"></button>
+    <button class="vert-face-btn" data-face-idx="5"></button>
+  </div>
+
 </nav>
 
-<script>
-  const cube  = document.getElementById('cube');
-  const scene = document.getElementById('scene');
-  const navBtns = document.querySelectorAll('.nav-btn');
+<script type="module" src="js/cube.js"></script>
+<script type="module" src="js/ui.js"></script>
 
-  const STEP = 90;
-  let rx = 0, ry = 0;
-
-  // Each face's canonical orientation: [rx, ry] to show that face front
-  const FACE_ORIENTATIONS = [
-    [0,    0],   // 0: front  – World
-    [0,  180],   // 1: back   – Magic
-    [0,  -90],   // 2: right  – Fire   (rotate cube left so right face comes forward)
-    [0,   90],   // 3: left   – Nature (rotate cube right so left face comes forward)
-    [-90,  0],   // 4: top    – Stars
-    [90,   0],   // 5: bottom – Ocean
-  ];
-
-  function setTransition(on) {
-    cube.style.transition = on
-      ? 'transform 0.55s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
-      : 'none';
-  }
-
-  function apply(animate = true) {
-    setTransition(animate);
-    cube.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg)`;
-    updateUI();
-  }
-
-  function currentFaceIdx() {
-    let normX = ((rx % 360) + 360) % 360;
-    let normY = ((ry % 360) + 360) % 360;
-    if (normX >= 45 && normX < 135)  return 4; // top
-    if (normX >= 225 && normX < 315) return 5; // bottom
-    if (normY >= 315 || normY < 45)  return 0; // front
-    if (normY >= 45  && normY < 135) return 3; // left face is now visible (ry=90 => left)
-    if (normY >= 135 && normY < 225) return 1; // back
-    return 2;                                   // right
-  }
-
-  function updateUI() {
-    const idx = currentFaceIdx();
-    navBtns.forEach((b, i) => b.classList.toggle('active', i === idx));
-  }
-
-  // Navigate to a face by snapping rx/ry to the canonical orientation,
-  // adding enough full rotations to minimise travel distance.
-  function navigateToFace(faceIdx) {
-    const [targetRx, targetRy] = FACE_ORIENTATIONS[faceIdx];
-
-    // Find the nearest equivalent angle (±n×360)
-    function nearest(current, target) {
-      const diff = ((target - current) % 360 + 540) % 360 - 180; // in [-180, 180]
-      return current + diff;
-    }
-
-    rx = nearest(rx, targetRx);
-    ry = nearest(ry, targetRy);
-    apply(true);
-  }
-
-  // Nav button clicks
-  navBtns.forEach((btn, i) => {
-    btn.addEventListener('click', () => navigateToFace(i));
-  });
-
-  // Keyboard
-  document.addEventListener('keydown', e => {
-    if (e.key === 'ArrowUp')    { e.preventDefault(); rx -= STEP; apply(); }
-    if (e.key === 'ArrowDown')  { e.preventDefault(); rx += STEP; apply(); }
-    if (e.key === 'ArrowLeft')  { e.preventDefault(); ry -= STEP; apply(); }
-    if (e.key === 'ArrowRight') { e.preventDefault(); ry += STEP; apply(); }
-  });
-
-  // Drag (mouse + touch)
-  let drag = false, startX = 0, startY = 0, baseRx = 0, baseRy = 0, dragged = false;
-  const DRAG_THRESHOLD = 8;
-  const DRAG_SPEED = 0.4;
-
-  function onStart(x, y) {
-    drag = true; dragged = false;
-    startX = x; startY = y;
-    baseRx = rx; baseRy = ry;
-    setTransition(false);
-  }
-  function onMove(x, y) {
-    if (!drag) return;
-    const dx = x - startX, dy = y - startY;
-    if (!dragged && (Math.abs(dx) > DRAG_THRESHOLD || Math.abs(dy) > DRAG_THRESHOLD)) dragged = true;
-    if (!dragged) return;
-    rx = baseRx - dy * DRAG_SPEED;
-    ry = baseRy + dx * DRAG_SPEED;
-    apply(false);
-  }
-  function onEnd() {
-    if (!drag) return;
-    drag = false;
-    // Snap to nearest 90°
-    rx = Math.round(rx / STEP) * STEP;
-    ry = Math.round(ry / STEP) * STEP;
-    apply(true);
-  }
-
-  scene.addEventListener('mousedown',  e => onStart(e.clientX, e.clientY));
-  window.addEventListener('mousemove', e => onMove(e.clientX, e.clientY));
-  window.addEventListener('mouseup',   () => onEnd());
-
-  scene.addEventListener('touchstart', e => { const t = e.touches[0]; onStart(t.clientX, t.clientY); }, { passive: true });
-  window.addEventListener('touchmove', e => { const t = e.touches[0]; onMove(t.clientX, t.clientY); }, { passive: true });
-  window.addEventListener('touchend',  () => onEnd());
-
-  apply(false);
-
-  // ── View toggle ──
-  const viewSwitch = document.getElementById('view-switch');
-  const faceList   = document.getElementById('face-list');
-  const lblCube    = document.getElementById('lbl-cube');
-  const lblList    = document.getElementById('lbl-list');
-
-  viewSwitch.addEventListener('change', () => {
-    const listMode = viewSwitch.checked;
-    scene.classList.toggle('hidden', listMode);
-    faceList.classList.toggle('visible', listMode);
-    lblCube.classList.toggle('active-label', !listMode);
-    lblList.classList.toggle('active-label',  listMode);
-  });
-</script>
 </body>
 </html>
