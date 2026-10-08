@@ -1,7 +1,7 @@
 export const FACES = [
   {
     id: 0,
-    name: 'World',
+    name: '1',
     navIcon: '🌐',
     grid: { cols: 2, rows: 3 },
     blocks: [
@@ -34,7 +34,7 @@ export const FACES = [
   },
   {
     id: 1,
-    name: 'Fire',
+    name: '2',
     navIcon: '🔥',
     grid: { cols: 2, rows: 3 },
     blocks: [
@@ -57,7 +57,7 @@ export const FACES = [
   },
   {
     id: 2,
-    name: 'Magic',
+    name: '3',
     navIcon: '🔮',
     grid: { cols: 1, rows: 3 },
     blocks: [
@@ -80,7 +80,7 @@ export const FACES = [
   },
   {
     id: 3,
-    name: 'Nature',
+    name: '4',
     navIcon: '🌿',
     grid: { cols: 2, rows: 2 },
     blocks: [
@@ -108,7 +108,7 @@ export const FACES = [
   },
   {
     id: 4,
-    name: 'Stars',
+    name: '5',
     navIcon: '✨',
     grid: { cols: 2, rows: 2 },
     blocks: [
@@ -131,7 +131,7 @@ export const FACES = [
   },
   {
     id: 5,
-    name: 'Ocean',
+    name: '6',
     navIcon: '🌊',
     grid: { cols: 1, rows: 2 },
     blocks: [
